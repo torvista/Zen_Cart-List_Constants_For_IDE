@@ -22,7 +22,7 @@ $db_constants_query = 'SELECT configuration_id, configuration_title, configurati
 
 $db_constants_result = $db->Execute($db_constants_query);
 
-$html_header = "<!DOCTYPE html>\n<html>\n<head>\n<title>Configuration Keys</title>\n</head>\n<body style='font-family: Verdana, Arial, Helvetica, sans-serif;font-size: small'>\n<h1>Configuration Keys</h1><table border='1' cellspacing='0' cellpadding='2'><tr><th style='text-align: center'>configuration_id</th><th style='text-align: left'>configuration_key</th>" . ($show_configuration_values ? "<th style='text-align: left'>configuration_value</th>" : '') . "</tr>\n";
+$html_header = "<!DOCTYPE html>\n<html>\n<head>\n<title>Configuration Keys</title>\n</head>\n<body style='font-family: Verdana, Arial, Helvetica, sans-serif;font-size: small'>\n<h1>Configuration Keys</h1><table border='1' cellspacing='0' cellpadding='2' width='100%' style='table-layout: fixed;}'><tr><th style='text-align: center;' width='120px'>configuration_id</th><th style='text-align: left'>configuration_key</th>" . ($show_configuration_values ? "<th style='text-align: left;word-wrap: break-word'>configuration_value</th>" : '') . "</tr>\n";
 $html_footer = "</body>\n</html>";
 
 echo($show_on_screen ? $html_header : '');
