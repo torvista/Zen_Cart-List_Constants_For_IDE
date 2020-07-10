@@ -8,17 +8,13 @@ declare(strict_types=1);
 $show_on_screen = false;//default = false for security
 $show_configuration_values = false;//default= false for security. Just produce a list of constants without any values listed
 
-//uncomment to override previous settings
-//$show_on_screen = true;//temporary - for debugging only
-//$show_configuration_values = true;//temporary - for debugging only
-
-$filename = basename(__FILE__, '.php') . '_list_of _constants.php';//use the same filename as this file as a stub
+$filename = basename(__FILE__, '.php') . '_list_of _constants.php';//use this file as a stub for the created filename
 
 include('includes/application_top.php');
 if (!isset($db)) {
     exit;
 } // or die, return false, thrown exception,  to keep phpstorm inspects happy!
-$db_constants_query = 'SELECT configuration_id, configuration_title, configuration_key, configuration_value from ' . TABLE_CONFIGURATION . ' WHERE configuration_key >""';//there is one with no key name
+$db_constants_query = 'SELECT configuration_id, configuration_title, configuration_key, configuration_value FROM ' . TABLE_CONFIGURATION . ' WHERE configuration_key >""';//there is one with no key name
 
 $db_constants_result = $db->Execute($db_constants_query);
 $style = '
@@ -37,7 +33,8 @@ $html_footer = "</body>\n</html>";
 
 echo ($show_on_screen ? $html_header : '');
 
-$constants = "<?php //" . date('Y-m-d H:i:s') . "\n";
+$constants = '<?php //' . date('Y-m-d H:i:s') . "\n";
+$constants .= '//$show_configuration_values = ' . ($show_configuration_values ? 'true' : 'false') . "\n";
 $count = 0;
 foreach ($db_constants_result as $row) {
     $count++;
