@@ -1,19 +1,26 @@
 <?php
 declare(strict_types=1);
-//torvista
-//creates a file with a similar name AS THIS FILE (whatever you name it), listing configuration keys so an IDE can find them and prevent error inspections flagging "missing constants"
-///DO NOT PUT THIS FILE IN YOUR PRODUCTION SITE - LOCAL DEVELOPMENT USE ONLY, and in the admin folder only.
-//
+// https://github.com/torvista/zen-cart_list-configuration-constants
+// This script creates a file with a similar name AS THIS FILE (whatever you name it), listing the configuration keys so an IDE can find them and prevent error inspections flagging "missing constants"
+// DO NOT PUT THIS FILE IN YOUR PRODUCTION SITE, it is for LOCAL DEVELOPMENT USE ONLY. Put it in your "admin" folder only.
+// If the admin login screen appears...login!
+//for phpstorm inspections
+/* @var queryFactory $db
+ * */
 
 $show_on_screen = false;//default = false for security
 $show_configuration_values = false;//default= false for security. Just produce a list of constants without any values listed
 
-$filename = basename(__FILE__, '.php') . '_list_of _constants.php';//use this file as a stub for the created filename
+$filename = basename(__FILE__, '.php') . '_list_of_constants.php';//use this file's name as a stub for the output file
 
-include('includes/application_top.php');
+if (file_exists('includes/application_top.php')) {
+    include 'includes/application_top.php';
+} else {
+    die('ERROR: application_top.php not found');
+}
 if (!isset($db)) {
-    exit;
-} // or die, return false, thrown exception,  to keep phpstorm inspects happy!
+    exit('ERROR: $db not set');
+} // or die, return false, thrown exception, to keep phpstorm inspects happy!
 $db_constants_query = 'SELECT configuration_id, configuration_title, configuration_key, configuration_value FROM ' . TABLE_CONFIGURATION . ' WHERE configuration_key >""';//there is one with no key name
 
 $db_constants_result = $db->Execute($db_constants_query);
@@ -31,7 +38,7 @@ tr td:last-child{word-wrap:break-word;}
 $html_header = "<!DOCTYPE html>\n<html lang='en'>\n<head>\n" . $style . "\n<title>Configuration Keys</title>\n</head>\n<body>\n<h1>Configuration Keys</h1><table><tr><th>configuration_id</th><th>configuration_key</th>" . ($show_configuration_values ? "<th>configuration_value</th>" : '') . "</tr>\n";
 $html_footer = "</body>\n</html>";
 
-echo ($show_on_screen ? $html_header : '');
+echo($show_on_screen ? $html_header : '');
 
 $constants = '<?php //' . date('Y-m-d H:i:s') . "\n";
 $constants .= '//$show_configuration_values = ' . ($show_configuration_values ? 'true' : 'false') . "\n";
