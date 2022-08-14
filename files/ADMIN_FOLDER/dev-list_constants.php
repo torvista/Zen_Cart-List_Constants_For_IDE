@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
 // https://github.com/torvista/zen-cart_list-configuration-constants
-// This script creates a file with a similar name AS THIS FILE (whatever you name it), listing the configuration keys so an IDE can find them and prevent error inspections flagging "missing constants"
-// DO NOT PUT THIS FILE IN YOUR PRODUCTION SITE, it is for LOCAL DEVELOPMENT USE ONLY. Put it in your "admin" folder only.
+// This script creates a file with a similar name AS THIS FILE (whatever you name it), listing the configuration keys so
+// an IDE can find them and prevent error inspections flagging "missing constants"
+// DO NOT PUT THIS FILE IN YOUR PRODUCTION SITE, it is for LOCAL DEVELOPMENT USE ONLY. Put it in your "admin" folder.
 // If the admin login screen appears...login!
 //for phpstorm inspections
 /* @var queryFactory $db
@@ -15,8 +16,10 @@ $show_constant_values = true;//default=false for security: just produces a list 
 $parse_lang_define_arrays = true;
 $filename_separator = true; //prefix each block of constants with the source filename
 //////////////////////////////////////
-$filename_db_constants = basename(__FILE__, '.php') . '_db_constants.php';//use this file's name as a stub for the output file
-$filename_array_constants = basename(__FILE__, '.php') . '_array_constants.php';//use this file's name as a stub for the output file
+$filename_db_constants = basename(__FILE__, '.php') . '-db_constants.php';//use this file's name as a prefix for the
+// output file
+$filename_array_constants = basename(__FILE__, '.php') . '-array_constants.php';//use this file's name as a prefix for
+// the output file
 if (file_exists('includes/application_top.php')) {
     include 'includes/application_top.php';
 } else {
@@ -25,11 +28,12 @@ if (file_exists('includes/application_top.php')) {
 if (!isset($db)) {
     exit('ERROR: $db not set');
 } // or die, return false, thrown exception, to keep phpstorm inspects happy!
-if (!function_exists('mv_printVar')) {//formatted debugging output only
+if (!function_exists('mv_printVar')) {
     /**
      * @param $a
+     * function generates formatted debugging output
      */
-    function mv_printVar($a)
+    function mv_printVar($a): void
     {
         $backtrace = debug_backtrace()[0];
         $fh = fopen($backtrace['file'], 'rb');
@@ -54,40 +58,17 @@ if (!function_exists('mv_printVar')) {//formatted debugging output only
     <html lang="en">
     <head>
         <style>
-            body {
+           body {
                 font-family: Verdana, sans-serif;
                 font-size: 70%;
             }
-
-            table {
-                width: 100%;
-            }
-
             table, th, td {
                 border: solid thin black;
                 border-collapse: collapse;
             }
-
             th, td {
+                text-align:left;
                 padding: 3px;
-            }
-
-            th {
-                text-align: left;
-            }
-
-            td {
-                width: auto;
-            }
-
-            tr td:first-child {
-                text-align: center;
-                width: 1%;
-                white-space: nowrap;
-            }
-
-            tr td:last-child {
-                word-wrap: break-word;
             }
         </style>
         <title>Generate Files of Constants for an IDE</title>
@@ -95,20 +76,20 @@ if (!function_exists('mv_printVar')) {//formatted debugging output only
     <body>
     <h1>Generate Files of Constants for an IDE</h1>
     <?php
-
     if ($parse_db_configuration_constants) { ?>
         <h2>Parsing of Database Configuration Constants</h2>
         <table>
             <tr>
                 <th>configuration_id</th>
-                <th>configuration_key</th><?php echo($show_constant_values ? "<th>configuration_value</th>" : ''); ?></tr>
+                <th>configuration_key</th><?php echo($show_constant_values ? '<th>configuration_value</th>' : ''); ?></tr>
             <?php
-            $db_constants_query = 'SELECT configuration_id, configuration_title, configuration_key, configuration_value FROM ' . TABLE_CONFIGURATION
-                . ' WHERE configuration_key >""';//there is one with no key name
+            $db_constants_query = 'SELECT configuration_id, configuration_title, configuration_key, configuration_value 
+            FROM ' . TABLE_CONFIGURATION . ' 
+            WHERE configuration_key >""';//there is one with no key name
 
             $db_constants_result = $db->Execute($db_constants_query);
 
-            $constants = '<?php //' . date('Y-m-d H:i:s') . "\n";
+            $constants = '<?php // generated ' . date('Y-m-d H:i:s') . "\n";
             $constants .= '//$show_configuration_values = ' . ($show_constant_values ? 'true' : 'false') . "\n";
             $count = 0;
             foreach ($db_constants_result as $row) {
@@ -117,17 +98,25 @@ if (!function_exists('mv_printVar')) {//formatted debugging output only
                 $constant_title = $row['configuration_title'];
                 $constant_name = $row['configuration_key'];
                 $constant_value = $row['configuration_value'];
-                $constants .= "define('" . strtoupper($constant_name) . "', '" .
-                    ($show_constant_values ?
-                        ($constant_value === '\\' ? 'BACKSLASH replaced by file generator' : $constant_value)
-                        : '')
-                    . "');\t\t\t//configuration_id=" . $constant_id
-                    . " - $constant_title\n";//if a backslash is not replaced, it escapes the delimiter in the generated file and makes the rest of the file invalid. ?>
+                
+                $constants .= "define('" . strtoupper($constant_name) . "', '";
+                //if a backslash is not replaced, it escapes the delimiter in the generated file and makes the rest of the file invalid.
+                //this seems not be not used now
+                if ($show_constant_values) {
+                    if ($constant_value === '\\') {
+                        $constants .= 'BACKSLASH replaced by file generator';
+                    } else {
+                        $constants .= $constant_value;
+                    }
+                }
+                $constants .= "');\t\t\t//configuration_id=" . $constant_id .  " - $constant_title\n";
+                ?>
 
                 <tr>
-                    <td style="text-align: center"><?php echo $constant_id; ?></td>
-                    <td><?php echo strtoupper($constant_name); ?></td><?php echo($show_constant_values ? '<td>'
-                        . htmlentities($constant_value) . '</td>' : ''); ?></tr>
+                    <td><?php echo $constant_id; ?></td>
+                    <td><?php echo strtoupper($constant_name); ?></td>
+                    <?php echo($show_constant_values ? '<td>' . htmlentities($constant_value) . '</td>' : ''); ?>
+                </tr>
                 <?php
             }
 
@@ -184,14 +173,14 @@ if (!function_exists('mv_printVar')) {//formatted debugging output only
             mv_printVar($paths_to_scan);
         }
         $fh = fopen($filename_array_constants, 'wb'); // open/create the file.
-        $defines_header = '<?php //' . date('Y-m-d H:i:s') . "\n";
+        $defines_header = '<?php // generated' . date('Y-m-d H:i:s') . "\n";
         $defines_header .= '//$show_constant_values = ' . ($show_constant_values ? 'true' : 'false') . "\n";
         fwrite($fh, $defines_header);
 
         foreach ($paths_to_scan as $path_to_scan) { ?>
             <h2>Path to scan: "<?php echo $path_to_scan; ?>"</h2>
             <?php
-            $file_list = glob($path_to_scan . "lang.*.php");
+            $file_list = glob($path_to_scan . 'lang.*.php');
             if ($file_list === false || count($file_list) === 0) { ?>
                 <h3>No files found in: "<?php echo $path_to_scan; ?>"</h3>
                 <?php
