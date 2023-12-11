@@ -16,4 +16,5 @@ Options are available in the script to show/not show the actual values of the co
 Please report bugs in GitHub and if there is something missing, add it!
 
 ### Changelog
+11/12/2023: added constants from product_type_layout, added column to identify table name.  
 31/03/2023: moved file parsing to a function. Expanded function to allow parsing of files with array names not "$define".

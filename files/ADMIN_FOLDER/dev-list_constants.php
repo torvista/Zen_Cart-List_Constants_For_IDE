@@ -10,7 +10,7 @@ declare(strict_types=1);
 /*
 * @copyright torvista
 * @license http://www.zen-cart.com/license/2_0.txt GNU Public Licence V2.0
-* @version 31 Mar 2023
+* @version 11 Dec 2023
  */
 
 // for phpstorm inspections
@@ -51,7 +51,11 @@ if (!function_exists('mv_printVar')) {
             $code = fgets($fh);
         }
         fclose($fh);
-        preg_match('/' . __FUNCTION__ . '\s*\((.*)\)\s*;/u', $code, $name);
+        if ($code !== false) {
+            preg_match('/' . __FUNCTION__ . '\s*\((.*)\)\s*;/u', $code, $name);
+        } else {
+            $name = '';
+        }
         echo '<pre>';
         if (!empty($name[1])) {
             echo '<strong>' . trim($name[1]) . '</strong> (' . gettype($a) . "):\n";
@@ -115,6 +119,9 @@ function parse_file($filename, $array_names = []): void
                 text-align: left;
                 padding: 3px;
             }
+            .columnID {
+                text-align: center;
+            }
         </style>
         <title>List Constants</title>
     </head>
@@ -125,11 +132,16 @@ function parse_file($filename, $array_names = []): void
         <h2>Parsing of Database Configuration Constants</h2>
         <table>
             <tr>
-                <th>configuration_id</th>
+                <th>Table</th>
+                <th class="columnID">configuration_id</th>
                 <th>configuration_key</th><?= ($show_constant_values ? '<th>configuration_value</th>' : ''); ?></tr>
             <?php
-            $db_constants_query = 'SELECT configuration_id, configuration_title, configuration_key, configuration_value
+            $db_constants_query = '
+            SELECT "'. TABLE_CONFIGURATION . '" AS tableName, configuration_id, configuration_title, configuration_key, configuration_value
             FROM ' . TABLE_CONFIGURATION . '
+            UNION ALL
+            SELECT "'. TABLE_PRODUCT_TYPE_LAYOUT . '" AS tableName, configuration_id, configuration_title, configuration_key, configuration_value
+            FROM ' . TABLE_PRODUCT_TYPE_LAYOUT . '
             WHERE configuration_key >""';//there is one with no key name
 
             $db_constants_result = $db->Execute($db_constants_query);
@@ -139,6 +151,7 @@ function parse_file($filename, $array_names = []): void
             $count = 0;
             foreach ($db_constants_result as $row) {
                 $count++;
+                $tableName = $row['tableName'];
                 $constant_id = $row['configuration_id'];
                 $constant_title = $row['configuration_title'];
                 $constant_name = $row['configuration_key'];
@@ -158,7 +171,8 @@ function parse_file($filename, $array_names = []): void
                 ?>
 
                 <tr>
-                    <td><?= $constant_id; ?></td>
+                    <td><?= $tableName; ?></td>
+                    <td class="columnID"><?= $constant_id; ?></td>
                     <td><?= strtoupper($constant_name); ?></td>
                     <?= ($show_constant_values ? '<td>' . htmlentities($constant_value) . '</td>' : ''); ?>
                 </tr>
