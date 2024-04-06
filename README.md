@@ -4,6 +4,11 @@ Your IDE may not index (find) the constants stored in the database, nor those in
 This script extracts the constants defined in the database and in the language arrays (and other misc. files) to create two .php files that the IDE can index.
 
 ## How to use the script
+If you wish to include constants from your custom template, add the template name in the array:
+```
+// Add your custom template name(s) here
+$templates_custom = ['my_template'];
+```
 The script should be copied to the admin folder of your **development** server and certainly never uploaded to a production site.
 
 In your browser, login to the admin, then manually enter the name of the file "dev-list-constants.php" after the admin directory name in the browser address bar to run the script.
@@ -16,5 +21,6 @@ Options are available in the script to show/not show the actual values of the co
 Please report bugs in GitHub and if there is something missing, add it!
 
 ### Changelog
+06/40/2024: add custom templates
 11/12/2023: added constants from product_type_layout, added column to identify table name.  
 31/03/2023: moved file parsing to a function. Expanded function to allow parsing of files with array names not "$define".

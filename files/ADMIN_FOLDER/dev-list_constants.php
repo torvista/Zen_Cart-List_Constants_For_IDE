@@ -10,8 +10,11 @@ declare(strict_types=1);
 /*
 * @copyright torvista
 * @license http://www.zen-cart.com/license/2_0.txt GNU Public Licence V2.0
-* @version 11 Dec 2023
+* @updated 6 April 2024
  */
+
+// Add your custom template name(s) here
+$templates_custom = ['my_template'];
 
 // for phpstorm inspections
 /* @var queryFactory $db
@@ -22,7 +25,6 @@ $show_constant_values = true; // default=false for security: just produces a lis
 
 $parse_lang_define_arrays = true;
 $filename_separator = true; // prefix each block of constants with the source filename
-
 ///////////////////////////////////////////
 $filename_file_constants = basename(__FILE__, '.php') . '-file_constants.php'; // use this file's name as a prefix for
 // the output file
@@ -159,7 +161,6 @@ function parse_file($filename, $array_names = []): void
 
                 $constants .= "define('" . strtoupper($constant_name) . "', '";
                 // if a backslash is not replaced, it escapes the delimiter in the generated file and makes the rest of the file invalid.
-                // this seems not be not used now
                 if ($show_constant_values) {
                     if ($constant_value === '\\') {
                         $constants .= 'BACKSLASH replaced by file generator';
@@ -192,12 +193,11 @@ function parse_file($filename, $array_names = []): void
     } ?>
     <hr>
     <?php
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     if ($parse_lang_define_arrays) {
         $discrete_files = [];
-        // add individual files to this array as per format below, using the array names
+        // add individual files to this array as per the format below, using the array names
         $discrete_files = array_merge(
-            [DIR_FS_CATALOG . DIR_WS_INCLUDES . 'init_includes/init_non_db_settings.php' => ['site_specific_non_db_settings', 'non_db_settings']]  // admin version just includes this one
+            [DIR_FS_CATALOG . DIR_WS_INCLUDES . 'init_includes/init_non_db_settings.php' => ['site_specific_non_db_settings', 'non_db_settings']]  // the admin version just includes this one
         );
         if ($debug) {
             mv_printVar($discrete_files);
@@ -220,22 +220,28 @@ function parse_file($filename, $array_names = []): void
             DIR_FS_CATALOG_LANGUAGES . $language . '/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/classic/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/extra_definitions/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/extra_definitions/classic/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/extra_definitions/responsive_classic/',
             //DIR_FS_CATALOG_LANGUAGES . $language . '/html_includes/',
             //DIR_FS_CATALOG_LANGUAGES . $language . '/html_includes/classic/',
             //DIR_FS_CATALOG_LANGUAGES . $language . '/html_includes/responsive_classic/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/modules/order_total/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/modules/order_total/classic/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/modules/order_total/responsive_classic/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/modules/payment/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/modules/payment/classic/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/modules/payment/responsive_classic/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/modules/shipping/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/modules/shipping/classic/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/modules/shipping/responsive_classic/',
-            DIR_FS_CATALOG_LANGUAGES . $language . '/responsive_classic/',
         );
+        /* template paths */
+        $templates_core = ['classic', 'responsive_classic'];
+        $templates = array_merge($templates_core, $templates_custom);
+        foreach ($templates as $tpl) { //cannot use name "$template"
+            array_push(
+                $paths_to_scan_lang,
+                DIR_FS_CATALOG_LANGUAGES . $language . '/' . $tpl . '/',
+                DIR_FS_CATALOG_LANGUAGES . $language . '/extra_definitions/' . $tpl . '/',
+                DIR_FS_CATALOG_LANGUAGES . $language . '/modules/order_total/' . $tpl . '/',
+                DIR_FS_CATALOG_LANGUAGES . $language . '/modules/payment/' . $tpl . '/',
+                DIR_FS_CATALOG_LANGUAGES . $language . '/modules/shipping/' . $tpl . '/',
+                DIR_FS_CATALOG_LANGUAGES . $language . '/' . $tpl . '/',
+            );
+        }
+
         if ($debug) {
             mv_printVar($paths_to_scan_lang);
         }
