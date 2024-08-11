@@ -1,17 +1,18 @@
 <?php
+/*
+ * @copyright torvista
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public Licence V2.0
+ * @updated 11 August 2024
+ * @todo: handle zc_plugins better
+ */
 
 declare(strict_types=1);
+
 // https://github.com/torvista/zen-cart_list-configuration-constants
 // This script creates a file with a similar name AS THIS FILE (whatever you name it), listing the configuration keys so
 // an IDE can find them and prevent error inspections flagging "missing constants"
 // DO NOT PUT THIS FILE IN YOUR PRODUCTION SITE, it is for LOCAL DEVELOPMENT USE ONLY. Put it in your "admin" folder.
 // If the admin login screen appears...login!
-
-/*
-* @copyright torvista
-* @license http://www.zen-cart.com/license/2_0.txt GNU Public Licence V2.0
-* @updated 6 April 2024
- */
 
 // Add your custom template name(s) here
 $templates_custom = ['my_template'];
@@ -29,6 +30,10 @@ $filename_separator = true; // prefix each block of constants with the source fi
 $filename_file_constants = basename(__FILE__, '.php') . '-file_constants.php'; // use this file's name as a prefix for
 // the output file
 $filename_db_constants = basename(__FILE__, '.php') . '-db_constants.php'; // use this file's name as a prefix for the
+
+//this is needed for when parsing lang.credit_cards there is a call to zen_image($template->get_template_dir(...$current_page_base
+$current_page_base ='index.php';
+
 // output file
 if (file_exists('includes/application_top.php')) {
     include 'includes/application_top.php';
@@ -71,7 +76,7 @@ if (!function_exists('mv_printVar')) {
  */
 function parse_file($filename, $array_names = []): void
 {
-    global $debug, $fh, $filename_separator, $show_constant_values;
+    global $db, $debug, $fh, $filename_separator, $show_constant_values;
     if ($debug) {
         mv_printVar($array_names);
     }
@@ -227,7 +232,29 @@ function parse_file($filename, $array_names = []): void
             DIR_FS_CATALOG_LANGUAGES . $language . '/modules/payment/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/modules/shipping/',
         );
-        /* template paths */
+//Core Plugins
+        //for \POSM\v6.0.0\admin\includes\languages\english\lang.products_options_stock.php
+        //tried to create vars and use $db, but not enough
+        //$lowstock_option = new stdClass();
+       // $lowstock_option->fields['configuration_group_id'] = 1;
+
+        array_push(
+            $paths_to_scan_lang,
+            DIR_FS_CATALOG . 'zc_plugins/' . "DisplayLogs/v3.0.2/admin/includes/languages/$language/",
+            DIR_FS_CATALOG . 'zc_plugins/' . "DisplayLogs/v3.0.2/admin/includes/languages/extra_definitions/$language/",
+            DIR_FS_CATALOG . 'zc_plugins/' . "POSM/v6.0.0/admin/includes/languages/$language/extra_definitions/",
+            //DIR_FS_CATALOG . 'zc_plugins/' . "POSM/v6.0.0/admin/includes/languages/$language/",
+            DIR_FS_CATALOG . 'zc_plugins/' . "POSM/v6.0.0/catalog/includes/languages/$language/extra_definitions/",
+            DIR_FS_CATALOG . 'zc_plugins/' . "POSM/v6.0.0/catalog/includes/languages/$language/",
+        );
+//site-specific plugins
+        array_push(
+            $paths_to_scan_lang,
+            DIR_FS_CATALOG . 'zc_plugins/' . "BackupMySQL/v2.0.0/admin/includes/languages/$language/extra_definitions/",
+            DIR_FS_CATALOG . 'zc_plugins/' . "BackupMySQL/v2.0.0/admin/includes/languages/$language/",
+        );
+
+// template paths
         $templates_core = ['classic', 'responsive_classic'];
         $templates = array_merge($templates_core, $templates_custom);
         foreach ($templates as $tpl) { //cannot use name "$template"
