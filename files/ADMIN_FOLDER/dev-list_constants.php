@@ -2,8 +2,7 @@
 /*
  * @copyright torvista
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public Licence V2.0
- * @updated 11 August 2024
- * @todo: handle zc_plugins better
+ * @updated 27 August 2024
  */
 
 declare(strict_types=1);
@@ -14,25 +13,23 @@ declare(strict_types=1);
 // DO NOT PUT THIS FILE IN YOUR PRODUCTION SITE, it is for LOCAL DEVELOPMENT USE ONLY. Put it in your "admin" folder.
 // If the admin login screen appears...login!
 
-// Add your custom template name(s) here
-$templates_custom = ['my_template'];
-
 // for phpstorm inspections
 /* @var queryFactory $db
-*/
+ */
 $debug = false;
 $parse_db_configuration_constants = true;
 $show_constant_values = true; // default=false for security: just produces a list of constants with no values listed
 
 $parse_lang_define_arrays = true;
 $filename_separator = true; // prefix each block of constants with the source filename
-///////////////////////////////////////////
-$filename_file_constants = basename(__FILE__, '.php') . '-file_constants.php'; // use this file's name as a prefix for
-// the output file
-$filename_db_constants = basename(__FILE__, '.php') . '-db_constants.php'; // use this file's name as a prefix for the
 
-//this is needed for when parsing lang.credit_cards there is a call to zen_image($template->get_template_dir(...$current_page_base
-$current_page_base ='index.php';
+///////////////////////////////////////////
+// use this file's name as a prefix for the output file, to keep them together
+$filename_file_constants = basename(__FILE__, '.php') . '-file_constants.php';
+$filename_db_constants = basename(__FILE__, '.php') . '-db_constants.php';
+
+// This variable needs to exist when parsing lang.credit_cards there is a call to zen_image($template->get_template_dir(...$current_page_base
+$current_page_base = 'index.php';
 
 // output file
 if (file_exists('includes/application_top.php')) {
@@ -43,6 +40,7 @@ if (file_exists('includes/application_top.php')) {
 if (!isset($db)) {
     exit('ERROR: $db not set');
 }
+
 if (!function_exists('mv_printVar')) {
     /**
      * @param $a
@@ -72,11 +70,11 @@ if (!function_exists('mv_printVar')) {
     }
 }
 /**
- * parse filename and optional array_names. If array_names is empty, assume it is a lang file and using $define as the array name.
+ * Parse filename and optional array_names. If array_names is empty, assume it is a lang file and using $define as the array name.
  */
 function parse_file($filename, $array_names = []): void
 {
-    global $db, $debug, $fh, $filename_separator, $show_constant_values;
+    global $debug, $fh, $filename_separator, $show_constant_values;
     if ($debug) {
         mv_printVar($array_names);
     }
@@ -118,14 +116,17 @@ function parse_file($filename, $array_names = []): void
                 font-family: Verdana, sans-serif;
                 font-size: 70%;
             }
+
             table, th, td {
                 border: solid thin black;
                 border-collapse: collapse;
             }
+
             th, td {
                 text-align: left;
                 padding: 3px;
             }
+
             .columnID {
                 text-align: center;
             }
@@ -144,10 +145,10 @@ function parse_file($filename, $array_names = []): void
                 <th>configuration_key</th><?= ($show_constant_values ? '<th>configuration_value</th>' : ''); ?></tr>
             <?php
             $db_constants_query = '
-            SELECT "'. TABLE_CONFIGURATION . '" AS tableName, configuration_id, configuration_title, configuration_key, configuration_value
+            SELECT "' . TABLE_CONFIGURATION . '" AS tableName, configuration_id, configuration_title, configuration_key, configuration_value
             FROM ' . TABLE_CONFIGURATION . '
             UNION ALL
-            SELECT "'. TABLE_PRODUCT_TYPE_LAYOUT . '" AS tableName, configuration_id, configuration_title, configuration_key, configuration_value
+            SELECT "' . TABLE_PRODUCT_TYPE_LAYOUT . '" AS tableName, configuration_id, configuration_title, configuration_key, configuration_value
             FROM ' . TABLE_PRODUCT_TYPE_LAYOUT . '
             WHERE configuration_key >""';//there is one with no key name
 
@@ -185,7 +186,7 @@ function parse_file($filename, $array_names = []): void
                 <?php
             }
 
-            $fh = fopen($filename_db_constants, 'wb'); // create the file. Notice the 'w'. This is to be able to write to the file once.
+            $fh = fopen($filename_db_constants, 'wb'); // Create the file. Notice the 'w'. This is to be able to write to the file once.
             fwrite($fh, $constants); // write the data to the file.
             fclose($fh); // close file
             ?>
@@ -194,7 +195,7 @@ function parse_file($filename, $array_names = []): void
         <?php
     } else { ?>
         <h2>Parsing of Database Configuration Constants: not enabled</h2>
-    <?php
+        <?php
     } ?>
     <hr>
     <?php
@@ -232,32 +233,10 @@ function parse_file($filename, $array_names = []): void
             DIR_FS_CATALOG_LANGUAGES . $language . '/modules/payment/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/modules/shipping/',
         );
-//Core Plugins
-        //for \POSM\v6.0.0\admin\includes\languages\english\lang.products_options_stock.php
-        //tried to create vars and use $db, but not enough
-        //$lowstock_option = new stdClass();
-       // $lowstock_option->fields['configuration_group_id'] = 1;
 
-        array_push(
-            $paths_to_scan_lang,
-            DIR_FS_CATALOG . 'zc_plugins/' . "DisplayLogs/v3.0.2/admin/includes/languages/$language/",
-            DIR_FS_CATALOG . 'zc_plugins/' . "DisplayLogs/v3.0.2/admin/includes/languages/extra_definitions/$language/",
-            DIR_FS_CATALOG . 'zc_plugins/' . "POSM/v6.0.0/admin/includes/languages/$language/extra_definitions/",
-            //DIR_FS_CATALOG . 'zc_plugins/' . "POSM/v6.0.0/admin/includes/languages/$language/",
-            DIR_FS_CATALOG . 'zc_plugins/' . "POSM/v6.0.0/catalog/includes/languages/$language/extra_definitions/",
-            DIR_FS_CATALOG . 'zc_plugins/' . "POSM/v6.0.0/catalog/includes/languages/$language/",
-        );
-//site-specific plugins
-        array_push(
-            $paths_to_scan_lang,
-            DIR_FS_CATALOG . 'zc_plugins/' . "BackupMySQL/v2.0.0/admin/includes/languages/$language/extra_definitions/",
-            DIR_FS_CATALOG . 'zc_plugins/' . "BackupMySQL/v2.0.0/admin/includes/languages/$language/",
-        );
-
-// template paths
-        $templates_core = ['classic', 'responsive_classic'];
-        $templates = array_merge($templates_core, $templates_custom);
-        foreach ($templates as $tpl) { //cannot use name "$template"
+        // Templates
+        $templates = zen_get_catalog_template_directories();
+        foreach ($templates as $tpl => $tpl_array) { //cannot use name "$template"
             array_push(
                 $paths_to_scan_lang,
                 DIR_FS_CATALOG_LANGUAGES . $language . '/' . $tpl . '/',
@@ -269,9 +248,58 @@ function parse_file($filename, $array_names = []): void
             );
         }
 
+        // Plugins
+        // lots of echos for backslash yes/no confusion
+        $zc_plugin_directories = glob(DIR_FS_CATALOG . 'zc_plugins/*', GLOB_ONLYDIR);
+        // Parse directories to get language files
+        //mv_printVar($zc_plugin_directories);
+        foreach ($zc_plugin_directories as $zc_plugin_directory) {
+            //echo "parsing $zc_plugin_directory<br>";
+            $plugin_subdirectories = scandir($zc_plugin_directory);
+            // Assume the current version of the plugin is the last/latest entry
+            //    [0] => .
+            //    [1] => ..
+            //    [2] => v3.0.1
+            //    [3] => v3.0.2
+            $plugin_directory_current = $zc_plugin_directory . '/' . $plugin_subdirectories[array_key_last($plugin_subdirectories)];
+            //echo "current plugin directory: $plugin_directory_current<br>";
+
+            // admin
+            $plugin_directory_lang = $plugin_directory_current . "/admin/includes/languages/$language";
+            //echo __LINE__ . ': $plugin_directory_lang = ' . $plugin_directory_lang . '<br>';
+            if (file_exists($plugin_directory_lang) && is_dir($plugin_directory_lang)) {
+                //echo __LINE__ . ": ADD lang directory $plugin_directory_lang" . '/' . '<br>';
+                $paths_to_scan_lang[] = $plugin_directory_lang . '/';
+                $plugin_lang_paths = glob("$plugin_directory_lang/*", GLOB_ONLYDIR);
+                //get any subdirectories
+                foreach ($plugin_lang_paths as $plugin_lang_path) {
+                    //echo "ADD subdirectory $plugin_lang_path" . '/' . '<br>';
+                    $paths_to_scan_lang[] = $plugin_lang_path . '/';
+                }
+            } else {
+                //echo "NO directory $plugin_directory_lang<br>";
+            }
+
+            // storefront
+            $plugin_directory_lang = $plugin_directory_current . "/catalog/includes/languages/$language";
+            //echo __LINE__ . ': $plugin_directory_lang = ' . $plugin_directory_lang . '<br>';
+            if (file_exists($plugin_directory_lang) && is_dir($plugin_directory_lang)) {
+                //echo __LINE__ . ": ADD lang directory $plugin_directory_lang" . '/' . '<br>';
+                $paths_to_scan_lang[] = $plugin_directory_lang . '/';
+                $plugin_lang_paths = glob("$plugin_directory_lang/*", GLOB_ONLYDIR);
+                //get any subdirectories
+                foreach ($plugin_lang_paths as $plugin_lang_path) {
+                    //echo "ADD subdirectory $plugin_lang_path" . '/' . '<br>';
+                    $paths_to_scan_lang[] = $plugin_lang_path . '/';
+                }
+            } else {
+                //echo "NO directory $plugin_directory_lang<br>";
+            }
+        }
         if ($debug) {
             mv_printVar($paths_to_scan_lang);
         }
+
         $fh = fopen($filename_file_constants, 'wb'); // open/create the file.
         $defines_header = '<?php // generated ' . date('Y-m-d H:i:s') . ' (' . date_default_timezone_get() . ') ' . "\n";
         $defines_header .= '// $show_constant_values = ' . ($show_constant_values ? 'true' : 'false') . "\n";
