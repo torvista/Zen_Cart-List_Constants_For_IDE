@@ -2,7 +2,7 @@
 /*
  * @copyright torvista
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public Licence V2.0
- * @updated 27 August 2024
+ * @updated 26/09/2024
  */
 
 declare(strict_types=1);
@@ -14,8 +14,10 @@ declare(strict_types=1);
 // If the admin login screen appears...login!
 
 // for phpstorm inspections
-/* @var queryFactory $db
+/**
+ * @var queryFactory $db
  */
+
 $debug = false;
 $parse_db_configuration_constants = true;
 $show_constant_values = true; // default=false for security: just produces a list of constants with no values listed
@@ -75,23 +77,34 @@ if (!function_exists('mv_printVar')) {
 function parse_file($filename, $array_names = []): void
 {
     global $debug, $fh, $filename_separator, $show_constant_values;
-    if ($debug) {
+    if ($debug && !empty($array_names)) {
+        echo __LINE__;
         mv_printVar($array_names);
     }
 
-    echo '<p>Reading file <b>' . $filename . '</b>: ';
+    echo '<p>Reading file <b>' . $filename . '</b>: <br>';
     include($filename);
     if (count($array_names) === 0) {
         $array_names[] = 'define';
     }
+    //add comment filename to file
     $filename = $filename_separator ? "// filename=$filename;\n" : '';
     fwrite($fh, $filename); // write data
+
     foreach ($array_names as $array_name) {
+        //$array_name holds the name of the array
+        //$$array_name is that array itself
+
+        //add comment name of array to file
         $defines_list = "// array name=$$array_name\n";
         if ($debug) {
-            echo '<br>array_name=$' . $array_name . '<br>';
-            mv_printVar($$array_name);
+            echo __LINE__ . ': array_name=$' . $array_name . '<br>';
         }
+        if (!isset($$array_name)) {
+            echo '<p style="background-color:red">Error: array $' . $array_name . ' is not set. Skipping this.</p>';
+            continue;
+        }
+
         foreach ($$array_name as $k => $v) {
             if ($show_constant_values) {
                 $v = str_replace("'", "\'", (string)$v);
@@ -103,8 +116,8 @@ function parse_file($filename, $array_names = []): void
             $defines_list .= "define('$k', '$v');\n";
         }
         fwrite($fh, $defines_list); // write data
+        echo 'constants added.</p>';
     }
-    echo 'constants added.</p>';
 }
 
 ?>
@@ -219,6 +232,7 @@ function parse_file($filename, $array_names = []): void
             DIR_FS_ADMIN . DIR_WS_LANGUAGES . $language . '/extra_definitions/',
             DIR_FS_ADMIN . DIR_WS_LANGUAGES . $language . '/modules/newsletters/',
         ];
+
 // shopfront
         array_push(
             $paths_to_scan_lang,
@@ -250,12 +264,18 @@ function parse_file($filename, $array_names = []): void
 
         // Plugins
         // lots of echos for backslash yes/no confusion
-        $zc_plugin_directories = glob(DIR_FS_CATALOG . 'zc_plugins/*', GLOB_ONLYDIR);
-        // Parse directories to get language files
-        //mv_printVar($zc_plugin_directories);
+        $installed_plugins = $db->Execute('SELECT unique_key FROM ' . TABLE_PLUGIN_CONTROL . ' WHERE status = 1');
+        $zc_plugin_directories = [];
+        foreach($installed_plugins as $installed_plugin) {
+            $zc_plugin_directories[] = DIR_FS_CATALOG . 'zc_plugins/' . $installed_plugin['unique_key'];
+        }
+
         foreach ($zc_plugin_directories as $zc_plugin_directory) {
-            //echo "parsing $zc_plugin_directory<br>";
-            $plugin_subdirectories = scandir($zc_plugin_directory);
+            $plugin_subdirectories = @scandir($zc_plugin_directory);
+            if ($plugin_subdirectories === false) {
+                echo '<p style="background-color:red">$zc_plugin_directory NOT FOUND: "' . $zc_plugin_directory . '"</p>';
+                continue;
+            }
             // Assume the current version of the plugin is the last/latest entry
             //    [0] => .
             //    [1] => ..
@@ -318,18 +338,23 @@ function parse_file($filename, $array_names = []): void
                 mv_printVar($file_list);
             }
 
+            // lang.gv_redeem.php and lang.gv_send.php reference other pre-defined constants in english.php and script chokes on that.
+            // lang.products_options_stock.php does a db query and chokes on that
+            $filenames_to_skip = [
+                DIR_FS_CATALOG_LANGUAGES . $language . '/' . 'lang.gv_redeem.php',
+                DIR_FS_CATALOG_LANGUAGES . $language . '/' . 'lang.gv_send.php',
+                DIR_FS_CATALOG . 'zc_plugins/POSM/v6.0.0/admin/includes/languages/' . $language . '/lang.products_options_stock.php',
+            ];
+
             foreach ($file_list as $filename) {
-                // lang.gv_redeem.php and lang.gv_send.php reference other pre-defined constants in english.php and script chokes on that.
-                // todo
-                if ($filename === DIR_FS_CATALOG_LANGUAGES . $language . '/' . 'lang.gv_redeem.php'
-                    || $filename === DIR_FS_CATALOG_LANGUAGES . $language . '/' . 'lang.gv_send.php'
-                ) {
+                if (in_array($filename, $filenames_to_skip)) {
                     echo '<p style="background-color:red">FILE "' . $filename . '" SKIPPED (see script line ' . __LINE__ . ')</p>';
-                    continue;
+                } else {
+                    parse_file($filename);
                 }
-                parse_file($filename);
             }
-        } ?>
+        }
+        ?>
         <h2>Parsing discrete files</h2>
         <?php
         foreach ($discrete_files as $key => $array_names) {
