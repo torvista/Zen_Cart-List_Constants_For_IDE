@@ -4,8 +4,33 @@
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public Licence V2.0
  * @updated 26/09/2024
  */
+// BMH 2025-07-27 ln312 change glob("$plugin_directory_lang/*", GLOB_ONLYDIR); to glob("$plugin_directory_lang/**/*", GLOB_ONLYDIR); for extra recursive past empty directory
+// BMH 2026-04-29 make directories recursive for plugins, to catch any lang files in subdirectories. Use scandir and recursion instead of glob because glob with GLOB_ONLYDIR does not work on some servers and glob with GLOB_ONLYDIR does not do recursion. See function getAllSubdirectories($dir): array
+// Veersion 1.1
 
 declare(strict_types=1);
+
+/**
+ * Recursively get all subdirectories of a given directory.
+ */
+function getAllSubdirectories($dir): array
+{
+    $subdirs = [];
+    if (!is_dir($dir)) {
+        return $subdirs;
+    }
+    $items = scandir($dir);
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..')
+            continue;
+        $path = $dir . '/' . $item;
+        if (is_dir($path)) {
+            $subdirs[] = $path;
+            $subdirs = array_merge($subdirs, getAllSubdirectories($path));
+        }
+    }
+    return $subdirs;
+}
 
 // https://github.com/torvista/zen-cart_list-configuration-constants
 // This script creates a file with a similar name AS THIS FILE (whatever you name it), listing the configuration keys so
@@ -37,6 +62,8 @@ $current_page_base = 'index.php';
 if (file_exists('includes/application_top.php')) {
     include 'includes/application_top.php';
 } else {
+    echo "<br> ln40 application_top.php not found"; // BMH DEBUG
+    sleep(5); // BMH DEBUG
     die('ERROR: application_top.php not found');
 }
 if (!isset($db)) {
@@ -107,7 +134,7 @@ function parse_file($filename, $array_names = []): void
 
         foreach ($$array_name as $k => $v) {
             if ($show_constant_values) {
-                $v = str_replace("'", "\'", (string)$v);
+                $v = str_replace("'", "\'", (string) $v);
                 $v = str_replace(["\r", "\n"], '', $v);
                 //   $v = str_replace("\n", "' . PHP_EOL . '", $v);
             } else {
@@ -123,6 +150,7 @@ function parse_file($filename, $array_names = []): void
 ?>
     <!DOCTYPE html>
     <html lang="en">
+
     <head>
         <style>
             body {
@@ -130,12 +158,15 @@ function parse_file($filename, $array_names = []): void
                 font-size: 70%;
             }
 
-            table, th, td {
+            table,
+            th,
+            td {
                 border: solid thin black;
                 border-collapse: collapse;
             }
 
-            th, td {
+            th,
+            td {
                 text-align: left;
                 padding: 3px;
             }
@@ -146,6 +177,7 @@ function parse_file($filename, $array_names = []): void
         </style>
         <title>List Constants</title>
     </head>
+
     <body>
     <h1>Generate Files of all Constants</h1>
     <?php
@@ -155,7 +187,8 @@ function parse_file($filename, $array_names = []): void
             <tr>
                 <th>Table</th>
                 <th class="columnID">configuration_id</th>
-                <th>configuration_key</th><?= ($show_constant_values ? '<th>configuration_value</th>' : ''); ?></tr>
+                <th>configuration_key</th><?= ($show_constant_values ? '<th>configuration_value</th>' : ''); ?>
+            </tr>
             <?php
             $db_constants_query = '
             SELECT "' . TABLE_CONFIGURATION . '" AS tableName, configuration_id, configuration_title, configuration_key, configuration_value
@@ -225,7 +258,7 @@ function parse_file($filename, $array_names = []): void
         <h2>Parsing of .lang and other define arrays</h2>
         <?php
         $language = 'english';
-// admin
+        // admin
         $paths_to_scan_lang = [
             DIR_FS_ADMIN . DIR_WS_LANGUAGES,
             DIR_FS_ADMIN . DIR_WS_LANGUAGES . $language . '/',
@@ -233,14 +266,14 @@ function parse_file($filename, $array_names = []): void
             DIR_FS_ADMIN . DIR_WS_LANGUAGES . $language . '/modules/newsletters/',
         ];
 
-// shopfront
+        // shopfront
         array_push(
             $paths_to_scan_lang,
             DIR_FS_CATALOG_LANGUAGES,
             DIR_FS_CATALOG_LANGUAGES . $language . '/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/classic/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/extra_definitions/',
-            //DIR_FS_CATALOG_LANGUAGES . $language . '/html_includes/',
+            DIR_FS_CATALOG_LANGUAGES . $language . '/html_includes/',
             //DIR_FS_CATALOG_LANGUAGES . $language . '/html_includes/classic/',
             //DIR_FS_CATALOG_LANGUAGES . $language . '/html_includes/responsive_classic/',
             DIR_FS_CATALOG_LANGUAGES . $language . '/modules/order_total/',
@@ -266,7 +299,7 @@ function parse_file($filename, $array_names = []): void
         // lots of echos for backslash yes/no confusion
         $installed_plugins = $db->Execute('SELECT unique_key FROM ' . TABLE_PLUGIN_CONTROL . ' WHERE status = 1');
         $zc_plugin_directories = [];
-        foreach($installed_plugins as $installed_plugin) {
+        foreach ($installed_plugins as $installed_plugin) {
             $zc_plugin_directories[] = DIR_FS_CATALOG . 'zc_plugins/' . $installed_plugin['unique_key'];
         }
 
@@ -290,8 +323,9 @@ function parse_file($filename, $array_names = []): void
             if (file_exists($plugin_directory_lang) && is_dir($plugin_directory_lang)) {
                 //echo __LINE__ . ": ADD lang directory $plugin_directory_lang" . '/' . '<br>';
                 $paths_to_scan_lang[] = $plugin_directory_lang . '/';
-                $plugin_lang_paths = glob("$plugin_directory_lang/*", GLOB_ONLYDIR);
+                $plugin_lang_paths = getAllSubdirectories($plugin_directory_lang);
                 //get any subdirectories
+
                 foreach ($plugin_lang_paths as $plugin_lang_path) {
                     //echo "ADD subdirectory $plugin_lang_path" . '/' . '<br>';
                     $paths_to_scan_lang[] = $plugin_lang_path . '/';
@@ -304,14 +338,21 @@ function parse_file($filename, $array_names = []): void
             $plugin_directory_lang = $plugin_directory_current . "/catalog/includes/languages/$language";
             //echo __LINE__ . ': $plugin_directory_lang = ' . $plugin_directory_lang . '<br>';
             if (file_exists($plugin_directory_lang) && is_dir($plugin_directory_lang)) {
-                //echo __LINE__ . ": ADD lang directory $plugin_directory_lang" . '/' . '<br>';
+                // echo __LINE__ . ": ADD lang directory $plugin_directory_lang" . '/' . '<br>'; // BMH DEBUG
                 $paths_to_scan_lang[] = $plugin_directory_lang . '/';
-                $plugin_lang_paths = glob("$plugin_directory_lang/*", GLOB_ONLYDIR);
+                $plugin_lang_paths = getAllSubdirectories($plugin_directory_lang);
+                // echo 'ln' .__LINE__ . ": plugin_lang_paths for storefront: " . count($plugin_lang_paths) . '<br>'; // BMH DEBUG
+                // var_dump($plugin_lang_paths); // BMH DEBUG
+
                 //get any subdirectories
                 foreach ($plugin_lang_paths as $plugin_lang_path) {
                     //echo "ADD subdirectory $plugin_lang_path" . '/' . '<br>';
                     $paths_to_scan_lang[] = $plugin_lang_path . '/';
+                    //echo 'ln' .__LINE__ . ": Adding lang path: $plugin_lang_path<br>"; // BMH DEBUG
+                    //var_dump($paths_to_scan_lang); // BMH DEBUG
+
                 }
+
             } else {
                 //echo "NO directory $plugin_directory_lang<br>";
             }
@@ -367,7 +408,9 @@ function parse_file($filename, $array_names = []): void
     } ?>
     <hr>
     <h4>Script complete</h4>
+
     <body>
+
     </html>
 <?php
 require('includes/application_bottom.php');
