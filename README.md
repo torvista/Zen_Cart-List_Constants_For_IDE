@@ -19,12 +19,13 @@ Options are available in the script to show/not show the actual values of the co
 
 Please report bugs in GitHub and if there is something missing, add it!
 
-## TODO
-Addition of non-core tables and constants.
-
 ### Changelog
-27/08/2024: auto-add template and plugin files  
-11/08/2024: added core zc_plugins language files  
-06/04/2024: add support for custom templates  
-11/12/2023: added constants from product_type_layout, added column to identify table name.  
-31/03/2023: moved file parsing to a function. Expanded function to allow parsing of files with array names not "$define".
+29/04/2026 BMH: make directories recursive for plugins, to catch any lang files in subdirectories.  
+Use scandir and recursion instead of glob because glob with GLOB_ONLYDIR does not work on some servers and glob with GLOB_ONLYDIR does not do recursion. See function getAllSubdirectories($dir)   
+27/07/2025 BMH: ln312 change glob("$plugin_directory_lang/*", GLOB_ONLYDIR); to glob("$plugin_directory_lang/**/*", GLOB_ONLYDIR); for extra recursive past empty directory
+GLOB_ONLYDIR does not do recursion. See function getAllSubdirectories($dir): array
+27/08/2024 torvista: auto-add template and plugin files  
+11/08/2024 torvista: added core zc_plugins language files  
+06/04/2024 torvista: add support for custom templates  
+11/12/2023 torvista: added constants from product_type_layout, added column to identify table name.  
+31/03/2023 torvista: moved file parsing to a function. Expanded function to allow parsing of files with array names not "$define".

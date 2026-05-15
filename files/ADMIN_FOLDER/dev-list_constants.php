@@ -1,14 +1,50 @@
 <?php
+
+declare(strict_types=1);
+
 /*
  * @copyright torvista
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public Licence V2.0
- * @updated 26/09/2024
+ * @version 2026-05-15 torvista
  */
-// BMH 2025-07-27 ln312 change glob("$plugin_directory_lang/*", GLOB_ONLYDIR); to glob("$plugin_directory_lang/**/*", GLOB_ONLYDIR); for extra recursive past empty directory
-// BMH 2026-04-29 make directories recursive for plugins, to catch any lang files in subdirectories. Use scandir and recursion instead of glob because glob with GLOB_ONLYDIR does not work on some servers and glob with GLOB_ONLYDIR does not do recursion. See function getAllSubdirectories($dir): array
-// Veersion 1.1
 
-declare(strict_types=1);
+// https://github.com/torvista/zen-cart_list-configuration-constants
+// This script creates a file with a similar name AS THIS FILE (whatever you name it), listing the configuration keys so
+// an IDE can find them and prevent error inspections flagging "missing constants"
+// DO NOT PUT THIS FILE IN YOUR PRODUCTION SITE, it is for LOCAL DEVELOPMENT USE ONLY. Put it in your "admin" folder.
+// If the admin login screen appears...login!
+
+// for phpstorm inspections
+/**
+ * @var queryFactory $db
+ */
+
+$debug = false;
+$parse_db_configuration_constants = true;
+$show_constant_values = true; // default=false for security: just produces a list of constants with no values listed
+
+$parse_lang_define_arrays = true;
+$filename_separator = true; // prefix each block of constants with the source filename
+
+///////////////////////////////////////////////////////////////////////////////////////
+// use this file's name as a prefix for the output file, to keep them together
+$filename_file_constants = basename(__FILE__, '.php') . '-file_constants.php';
+$filename_db_constants = basename(__FILE__, '.php') . '-db_constants.php';
+
+// This variable needs to exist when parsing lang.credit_cards there is a call to zen_image($template->get_template_dir(...$current_page_base
+$current_page_base = 'index.php';
+
+// output file
+if (file_exists('includes/application_top.php')) {
+    include 'includes/application_top.php';
+} else {
+    echo "<br> ln40 application_top.php not found"; // BMH DEBUG
+    sleep(5); // BMH DEBUG
+    die('ERROR: application_top.php not found');
+}
+if (!isset($db)) {
+    exit('ERROR: $db not set');
+}
 
 /**
  * Recursively get all subdirectories of a given directory.
@@ -30,44 +66,6 @@ function getAllSubdirectories($dir): array
         }
     }
     return $subdirs;
-}
-
-// https://github.com/torvista/zen-cart_list-configuration-constants
-// This script creates a file with a similar name AS THIS FILE (whatever you name it), listing the configuration keys so
-// an IDE can find them and prevent error inspections flagging "missing constants"
-// DO NOT PUT THIS FILE IN YOUR PRODUCTION SITE, it is for LOCAL DEVELOPMENT USE ONLY. Put it in your "admin" folder.
-// If the admin login screen appears...login!
-
-// for phpstorm inspections
-/**
- * @var queryFactory $db
- */
-
-$debug = false;
-$parse_db_configuration_constants = true;
-$show_constant_values = true; // default=false for security: just produces a list of constants with no values listed
-
-$parse_lang_define_arrays = true;
-$filename_separator = true; // prefix each block of constants with the source filename
-
-///////////////////////////////////////////
-// use this file's name as a prefix for the output file, to keep them together
-$filename_file_constants = basename(__FILE__, '.php') . '-file_constants.php';
-$filename_db_constants = basename(__FILE__, '.php') . '-db_constants.php';
-
-// This variable needs to exist when parsing lang.credit_cards there is a call to zen_image($template->get_template_dir(...$current_page_base
-$current_page_base = 'index.php';
-
-// output file
-if (file_exists('includes/application_top.php')) {
-    include 'includes/application_top.php';
-} else {
-    echo "<br> ln40 application_top.php not found"; // BMH DEBUG
-    sleep(5); // BMH DEBUG
-    die('ERROR: application_top.php not found');
-}
-if (!isset($db)) {
-    exit('ERROR: $db not set');
 }
 
 if (!function_exists('mv_printVar')) {
@@ -128,7 +126,7 @@ function parse_file($filename, $array_names = []): void
             echo __LINE__ . ': array_name=$' . $array_name . '<br>';
         }
         if (!isset($$array_name)) {
-            echo '<p style="background-color:red">Error: array $' . $array_name . ' is not set. Skipping this.</p>';
+            echo '<p style="background-color:red;">Error: array $' . $array_name . ' is not set. Skipping this.</p>';
             continue;
         }
 
@@ -306,7 +304,7 @@ function parse_file($filename, $array_names = []): void
         foreach ($zc_plugin_directories as $zc_plugin_directory) {
             $plugin_subdirectories = @scandir($zc_plugin_directory);
             if ($plugin_subdirectories === false) {
-                echo '<p style="background-color:red">$zc_plugin_directory NOT FOUND: "' . $zc_plugin_directory . '"</p>';
+                echo '<p style="background-color:red;">$zc_plugin_directory NOT FOUND: "' . $zc_plugin_directory . '"</p>';
                 continue;
             }
             // Assume the current version of the plugin is the last/latest entry
@@ -389,7 +387,7 @@ function parse_file($filename, $array_names = []): void
 
             foreach ($file_list as $filename) {
                 if (in_array($filename, $filenames_to_skip)) {
-                    echo '<p style="background-color:red">FILE "' . $filename . '" SKIPPED (see script line ' . __LINE__ . ')</p>';
+                    echo '<p style="background-color:red;">FILE "' . $filename . '" SKIPPED (see script line ' . __LINE__ . ')</p>';
                 } else {
                     parse_file($filename);
                 }
